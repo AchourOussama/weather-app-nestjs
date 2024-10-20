@@ -1,5 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import axios from 'axios';
+import * as countryCodeLookup from 'country-code-lookup';
 require('dotenv').config();
 
 @Injectable()
@@ -26,9 +27,14 @@ export class GeocodingService {
       
       const  lat = data[0]["lat"];
       const lon = data[0]["lon"];
-      return { lat, lon };
+      const country = this.getCountryName(data[0].country);
+      return { lat, lon, country };
     } catch (error) {
       throw new HttpException('Error retrieving coordinates', HttpStatus.BAD_REQUEST);
     }
+  }
+  getCountryName(code: string): string {
+    const country = countryCodeLookup.byIso(code);
+    return country ? country.country : 'Unknown Country';
   }
 }

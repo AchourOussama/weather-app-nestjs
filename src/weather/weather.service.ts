@@ -12,7 +12,7 @@ export class WeatherService {
   async getWeatherByCity(cityName: string, stateCode?: string, countryCode?: string, limit?: number) {
     try {
       // Get coordinates from the city name, state code, country code, and optional limit
-      const { lat, lon } = await this.geocodingService.getCoordinates(cityName, stateCode, countryCode, limit);
+      const { lat, lon, country } = await this.geocodingService.getCoordinates(cityName, stateCode, countryCode, limit);
       console.log(lat,lon)
 
       // Fetch weather data using the coordinates
@@ -37,7 +37,7 @@ export class WeatherService {
       }).join('\n');
 
       return `
-      Weather Report for ${cityName}:
+      Weather Report for ${cityName},${country}:
       - Current Temperature: ${currentTemperature} (Feels like: ${feelsLikeTemperature})
       - Humidity: ${humidity}
       - Wind Speed: ${windSpeed}
@@ -46,18 +46,6 @@ export class WeatherService {
       ${dailyForecast}
       `;
 
-      // return {
-      //   city: cityName,
-      //   latitude: lat,
-      //   longitude: lon,
-      //   currentTemperature: (weatherData.current.temp - 273.15).toFixed(2) + '°C',
-      //   description: weatherData.current.weather[0].description,
-      //   dailyForecast: weatherData.daily.map(day => ({
-      //     date: new Date(day.dt * 1000).toLocaleDateString(),
-      //     temp: (day.temp.day - 273.15).toFixed(2) + '°C',
-      //     description: day.weather[0].description,
-      //   })),
-      // };
     } catch (error) {
       throw new HttpException('Error retrieving weather data', HttpStatus.BAD_REQUEST);
     }
