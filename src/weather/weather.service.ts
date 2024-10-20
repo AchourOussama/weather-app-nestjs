@@ -33,8 +33,8 @@ export class WeatherService {
         const maxTemp = (day.temp.max - 273.15).toFixed(2) + '°C';
         const description = day.weather[0].description;
 
-        return `      On ${date}, the temperature will range from ${minTemp} to ${maxTemp} with ${description}.`;
-      }).join('\n');
+        return `On ${date}, the temperature will range from ${minTemp} to ${maxTemp} with ${description}.`;
+      }).join('\n      ');
 
       return `
       Weather Report for ${cityName},${country}:
