@@ -6,7 +6,6 @@ require('dotenv').config();
 @Injectable()
 export class WeatherService {
   private readonly API_KEY = process.env.API_KEY;
-  // private readonly API_KEY = "ecbef96e9813ae7f56bcd82edf984508"  ;  // Replace with your OpenWeather API key
 
   constructor(private readonly geocodingService: GeocodingService) {}
 
