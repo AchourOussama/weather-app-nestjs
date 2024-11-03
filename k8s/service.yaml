@@ -1,0 +1,28 @@
+# This an internal service 
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: weather-app-service
+# spec:
+#   selector:
+#     app: weather-app
+#   ports:
+#     - protocol: TCP
+#       port: 3030
+#       targetPort: 3000
+---
+# This is a Load balancer (external) service 
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-app-service
+  namespace: weather-app
+spec:
+  type: LoadBalancer
+  selector:
+    app: weather-app 
+  ports:
+    - protocol: TCP
+      port: 3030  
+      targetPort: 3000   
