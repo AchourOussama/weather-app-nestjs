@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: weather-deployment
-  namespace: weather-app
+  namespace: jenkins-namespace
   labels:
     app: weather-app
 spec:
