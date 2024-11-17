@@ -25,6 +25,8 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'kube-config']) {
                     sh '''
+                        # Testing
+                        command -v kubectl
                         # Check if kubectl exists
                         if ! command -v kubectl &> /dev/null; then
                             echo "kubectl not found. Installing..."
