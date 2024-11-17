@@ -8,19 +8,19 @@ pipeline {
 
     stages {
         
-        stage('Install Kubectl') {
-            steps {
-                withKubeConfig([credentialsId: 'kube-config']) {
-                    //Change the kubectl release based on the version and the cpu architecture of the platform hosting the cluster 
-                    sh '''
-                        curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.29.0/bin/linux/arm64/kubectl"
-                        chmod u+x ./kubectl
-                        mv ./kubectl /bin/kubectl
-                        kubectl version
-                    '''
-                }
-            }
-        }
+        // stage('Install Kubectl') {
+        //     steps {
+        //         withKubeConfig([credentialsId: 'kube-config']) {
+        //             //Change the kubectl release based on the version and the cpu architecture of the platform hosting the cluster 
+        //             sh '''
+        //                 curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.29.0/bin/linux/arm64/kubectl"
+        //                 chmod u+x ./kubectl
+        //                 mv ./kubectl /bin/kubectl
+        //                 kubectl version
+        //             '''
+        //         }
+        //     }
+        // }
         stage('Clone Repository') {
             steps {
                 git url: 'https://github.com/AchourOussama/weather-app-nestjs', branch: 'main' 
