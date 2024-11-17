@@ -21,6 +21,27 @@ pipeline {
         //         }
         //     }
         // }
+        stage('Install Kubectl') {
+            steps {
+                withKubeConfig([credentialsId: 'kube-config']) {
+                    sh '''
+                        # Check if kubectl exists
+                        if ! command -v kubectl &> /dev/null; then
+                            echo "kubectl not found. Installing..."
+                            curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.29.0/bin/linux/arm64/kubectl"
+                            chmod u+x ./kubectl
+                            sudo mv ./kubectl /usr/local/bin/kubectl
+                        else
+                            echo "kubectl is already installed."
+                        fi
+
+                        # Display the kubectl version
+                        kubectl version --client
+                    '''
+                }
+            }
+        }
+
         stage('Clone Repository') {
             steps {
                 git url: 'https://github.com/AchourOussama/weather-app-nestjs', branch: 'main' 
