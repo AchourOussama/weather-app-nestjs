@@ -25,10 +25,8 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'kube-config']) {
                     sh '''
-                        # Testing
-                        command -v kubectl
                         # Check if kubectl exists
-                        if ! command -v kubectl &> /dev/null; then
+                        if ! command -v kubectl 2>&1 >/dev/null; then
                             echo "kubectl not found. Installing..."
                             curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.29.0/bin/linux/arm64/kubectl"
                             chmod u+x ./kubectl
