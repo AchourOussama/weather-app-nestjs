@@ -8,19 +8,6 @@ pipeline {
 
     stages {
         
-        // stage('Install Kubectl') {
-        //     steps {
-        //         withKubeConfig([credentialsId: 'kube-config']) {
-        //             //Change the kubectl release based on the version and the cpu architecture of the platform hosting the cluster 
-        //             sh '''
-        //                 curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.29.0/bin/linux/arm64/kubectl"
-        //                 chmod u+x ./kubectl
-        //                 mv ./kubectl /bin/kubectl
-        //                 kubectl version
-        //             '''
-        //         }
-        //     }
-        // }
         stage('Install Kubectl') {
             steps {
                 withKubeConfig([credentialsId: 'kube-config']) {
@@ -42,11 +29,11 @@ pipeline {
             }
         }
 
-        stage('Clone Repository') {
-            steps {
-                git url: 'https://github.com/AchourOussama/weather-app-nestjs', branch: 'main' 
-            }
-        }
+        // stage('Clone Repository') {
+        //     steps {
+        //         git url: 'https://github.com/AchourOussama/weather-app-nestjs', branch: 'main' 
+        //     }
+        // }
 
         // stage('Build Docker Image') {
         //     steps {
@@ -71,7 +58,8 @@ pipeline {
             withCredentials([
                 string(credentialsId: 'jenkins-k8s-token', variable: 'api_token')
                 ]) {
-                 sh 'kubectl --token $api_token --server https://192.168.49.2:8443  --insecure-skip-tls-verify=true apply -f k8s'
+                 sh 'kubectl --token $api_token --server https://192.168.49.2:8443  --insecure-skip-tls-verify=true apply -f k8s/deployment.yaml'
+                 sh 'kubectl --token $api_token --server https://192.168.49.2:8443  --insecure-skip-tls-verify=true apply -f k8s/service.yaml'
                   }
                 }
         }
