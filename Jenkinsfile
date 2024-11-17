@@ -30,7 +30,7 @@ pipeline {
                             echo "kubectl not found. Installing..."
                             curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.29.0/bin/linux/arm64/kubectl"
                             chmod u+x ./kubectl
-                            sudo mv ./kubectl /usr/local/bin/kubectl
+                            mv ./kubectl /bin/kubectl
                         else
                             echo "kubectl is already installed."
                         fi
