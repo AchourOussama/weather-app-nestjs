@@ -1,7 +1,7 @@
 def runStage() {
    // Fetch the list of changed files from the last two commits
    def CHANGE_SET = sh(
-      script: 'git diff --name-only HEAD~2 HEAD',
+      script: 'git diff --name-only HEAD~1 HEAD',
       returnStdout: true
    ).trim()
    
@@ -67,7 +67,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Deploy App on k8s') {
           steps {
             withCredentials([
