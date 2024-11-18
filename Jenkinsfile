@@ -1,3 +1,16 @@
+def runStage() {
+   // Fetch the list of changed files from the last two commits
+   def CHANGE_SET = sh(
+      script: 'git diff --name-only HEAD~2 HEAD',
+      returnStdout: true
+   ).trim()
+   
+   echo "Current changeset: ${CHANGE_SET}"
+   
+   // Check for changes in specified directories or files using regex
+   return CHANGE_SET =~ /(.*src.*|.*Dockerfile)/
+}
+
 pipeline {
     agent any
 
@@ -34,25 +47,32 @@ pipeline {
         //         git url: 'https://github.com/AchourOussama/weather-app-nestjs', branch: 'main' 
         //     }
         // }
+        
+        stage('Build Docker Image') {
+            when { 
+                expression { runStage() }
+            }
+            steps {
+                echo "Changes detected in ./src or Dockerfile. Running the stage..."
+                // script {
+                //     app = docker.build("${DOCKER_IMAGE_NAME}") 
+                // }
+            }
+        }
 
-        // stage('Build Docker Image') {
-        //     steps {
-        //         script {
-        //             app = docker.build("${DOCKER_IMAGE_NAME}") 
-        //         }
-                
-        //     }
-        // }
-
-        // stage('Push Docker Image') {
-        //     steps {
-        //         script {
-        //             docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-        //                 app.push("latest")  
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Push Docker Image') {
+            when { 
+                expression { runStage() }
+            }
+            steps {
+                echo "Changes detected in ./src directory or Dockerfile. Running the stage..."
+                // script {
+                //     docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+                //         app.push("latest")  
+                //     }
+                // }
+            }
+        }
         stage('Deploy App on k8s') {
           steps {
             withCredentials([
