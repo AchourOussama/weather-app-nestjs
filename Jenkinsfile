@@ -54,9 +54,9 @@ pipeline {
             }
             steps {
                 echo "Changes detected in ./src or Dockerfile. Running the stage..."
-                // script {
-                //     app = docker.build("${DOCKER_IMAGE_NAME}") 
-                // }
+                script {
+                    app = docker.build("${DOCKER_IMAGE_NAME}") 
+                }
             }
         }
 
@@ -66,11 +66,11 @@ pipeline {
             }
             steps {
                 echo "Changes detected in ./src directory or Dockerfile. Running the stage..."
-                // script {
-                //     docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                //         app.push("latest")  
-                //     }
-                // }
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+                        app.push("latest")  
+                    }
+                }
             }
         }
         stage('Deploy App on k8s') {
