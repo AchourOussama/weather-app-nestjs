@@ -7,7 +7,7 @@ def runStage() {
    
    echo "Current changeset: ${CHANGE_SET}"
    
-   // Check for changes in specified directories or files using regex
+   // Check for changes in specified directories or files 
    return CHANGE_SET =~ /(.*src.*|.*Dockerfile)/
 }
 
@@ -25,7 +25,7 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'kube-config']) {
                     sh '''
-                        # Check if kubectl exists
+                        # Check if kubectl exists otherwise install it 
                         if ! command -v kubectl 2>&1 >/dev/null; then
                             echo "kubectl not found. Installing..."
                             curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.29.0/bin/linux/arm64/kubectl"
@@ -41,22 +41,16 @@ pipeline {
                 }
             }
         }
-
-        // stage('Clone Repository') {
-        //     steps {
-        //         git url: 'https://github.com/AchourOussama/weather-app-nestjs', branch: 'main' 
-        //     }
-        // }
-        
+       
         stage('Build Docker Image') {
             when { 
                 expression { runStage() }
             }
             steps {
                 echo "Changes detected in ./src or Dockerfile. Running the stage..."
-                // script {
-                //     app = docker.build("${DOCKER_IMAGE_NAME}") 
-                // }
+                script {
+                    app = docker.build("${DOCKER_IMAGE_NAME}") 
+                }
             }
         }
 
@@ -66,24 +60,24 @@ pipeline {
             }
             steps {
                 echo "Changes detected in ./src directory or Dockerfile. Running the stage..."
-                // script {
-                //     docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                //         app.push("latest")  
-                //     }
-                // }
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+                        app.push("latest")  
+                    }
+                }
             }
         }
+        
         stage('Deploy App on k8s') {
           steps {
             withCredentials([
                 string(credentialsId: 'jenkins-k8s-token', variable: 'api_token')
                 ]) {
-                 sh 'kubectl --token $api_token   --insecure-skip-tls-verify=true apply -f k8s/deployment.yaml'
+                 sh 'kubectl --token $api_token --server https://192.168.49.2:8443  --insecure-skip-tls-verify=true apply -f k8s/deployment.yaml'
                  sh 'kubectl --token $api_token --server https://192.168.49.2:8443  --insecure-skip-tls-verify=true apply -f k8s/service.yaml'
                   }
                 }
         }
-
     }
 
     post {
