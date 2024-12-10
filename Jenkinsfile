@@ -15,51 +15,49 @@ pipeline {
     agent any
 
     environment {
+        ACR_REGISTRY = "oussweatherapp.azurecr.io"
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
-        DOCKER_IMAGE_NAME = 'oussachour/weather-app-nestjs:latest' 
+        DOCKER_IMAGE_NAME = 'weather-app-backend'
+        DOCKER_IMAGE_TAG = 'latest'
+        RESOURCE_GROUP='weather-app-rg'
+        WEB_APP_NAME='weather-app-backend'
+         
     }
 
     stages {
         
-        stage('Install Kubectl') {
-            steps {
-                withKubeConfig([credentialsId: 'kube-config']) {
-                    sh '''
-                        # Check if kubectl exists otherwise install it 
-                        if ! command -v kubectl 2>&1 >/dev/null; then
-                            echo "kubectl not found. Installing..."
-                            curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.29.0/bin/linux/arm64/kubectl"
-                            chmod u+x ./kubectl
-                            mv ./kubectl /bin/kubectl
-                        else
-                            echo "kubectl is already installed."
-                        fi
-
-                        # Display the kubectl version
-                        kubectl version --client
-                    '''
-                }
-            }
-        }
-       
+        
         stage('Build Docker Image') {
             when { 
                 expression { runStage() }
             }
             steps {
-                echo "Changes detected in ./src or Dockerfile. Running the stage..."
+                echo "Changes detected in ./src or Dockerfile. Building a new docker image..."
                 script {
-                    app = docker.build("${DOCKER_IMAGE_NAME}") 
+                    app = docker.build("${ACR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}") 
                 }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push Docker Image to ACR') {
             when { 
                 expression { runStage() }
             }
             steps {
-                echo "Changes detected in ./src directory or Dockerfile. Running the stage..."
+                echo "Pushing the new docker image to ACR ..."
+                script {
+                    sh "az acr login --name ${ACR_REGISTRY}"
+                    sh "docker push ${ACR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            when { 
+                expression { runStage() }
+            }
+            steps {
+                echo "Pushing the new docker image to Docker Hub ..."
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
                         app.push("latest")  
@@ -67,17 +65,27 @@ pipeline {
                 }
             }
         }
-
-        stage('Deploy App on k8s') {
-          steps {
-            withCredentials([
-                string(credentialsId: 'jenkins-k8s-token', variable: 'api_token')
-                ]) {
-                 sh 'kubectl --token $api_token --server https://192.168.49.2:8443  --insecure-skip-tls-verify=true apply -f k8s/deployment.yaml'
-                 sh 'kubectl --token $api_token --server https://192.168.49.2:8443  --insecure-skip-tls-verify=true apply -f k8s/service.yaml'
-                  }
+        stage('Deploy to Azure') {
+            when { 
+                expression { runStage() }
+            }
+            steps {
+                script {
+                    // Force Azure to pull the latest image
+                    sh """
+                        az webapp config container set \
+                            --name ${WEB_APP_NAME} \
+                            --resource-group ${RESOURCE_GROUP} \
+                            --docker-custom-image-name ${ACR_REGISTRY}/${IMAGE_NAME}:latest \
+                            --docker-registry-server-url https://${ACR_REGISTRY}
+                    """
+                    
+                    // Restart the Web App to pull the new image
+                    sh "az webapp restart --name ${WEB_APP_NAME} --resource-group ${RESOURCE_GROUP}"
                 }
+            }
         }
+
     }
 
     post {
