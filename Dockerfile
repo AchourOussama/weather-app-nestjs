@@ -1,13 +1,85 @@
-FROM node:22.10.0-alpine3.20
+# FROM node:22.10.0-alpine3.20
 
-WORKDIR /app
+# WORKDIR /app
 
-COPY ./package*.json .
+# COPY ./package*.json .
 
-RUN npm ci 
+# RUN npm ci 
 
-COPY . .
+# COPY . .
 
-EXPOSE 3000
+# EXPOSE 3000
 
-CMD [ "npm", "run", "start:dev" ]
+# CMD [ "npm", "run", "start:dev" ]
+
+###################
+# BUILD FOR LOCAL DEVELOPMENT
+###################
+
+FROM node:18-alpine As development
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Copy application dependency manifests to the container image.
+COPY --chown=node:node package*.json ./
+
+# Install app dependencies using the `npm ci` command instead of `npm install`
+RUN npm ci
+
+# Bundle app source
+COPY --chown=node:node . .
+
+# Copy the .env file for local development (if present)
+COPY .env .env
+
+# Use the node user from the image (instead of the root user)
+USER node
+
+###################
+# BUILD FOR PRODUCTION
+###################
+
+FROM node:18-alpine As build
+
+WORKDIR /usr/src/app
+
+COPY --chown=node:node package*.json ./
+
+# In order to run `npm run build` we need access to the Nest CLI which is a dev dependency. 
+# In the previous development stage we ran `npm ci` which installed all dependencies, 
+# so we can copy over the node_modules directory from the development image
+COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
+
+COPY --chown=node:node . .
+
+# Copy the .env file for production (if present)
+COPY .env .env
+
+# Run the build command which creates the production bundle
+RUN npm run build
+
+# Set NODE_ENV environment variable
+ENV NODE_ENV production
+
+# Running `npm ci` removes the existing node_modules directory and passing in --only=production ensures 
+# that only the production dependencies are installed. This ensures that the node_modules directory is optimized.
+RUN npm ci --only=production && npm cache clean --force
+
+USER node
+
+###################
+# PRODUCTION
+###################
+
+FROM node:18-alpine As production
+
+# Copy the bundled code from the build stage to the production image
+COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
+COPY --chown=node:node --from=build /usr/src/app/dist ./dist
+
+# Copy the .env file for production environment (if not already included)
+COPY .env .env
+
+# Start the server using the production build
+CMD [ "node", "dist/main.js" ]
