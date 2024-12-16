@@ -3,7 +3,8 @@
 This is a **weather forecasting application** that retrieves weather data for a given city name using the [OpenWeather API](https://openweathermap.org/).
 
 This repository includes the source code for the Backend tier of this application, written in **NestJS**.
-Check other related repositories : 
+
+# Related repositories : 
 - [Frontend (NestJS)](https://github.com/AchourOussama/weather-app-angular)
 - [Infrastructure(Azure with Terraform )](https://github.com/AchourOussama/weather-app-infra) 
 
