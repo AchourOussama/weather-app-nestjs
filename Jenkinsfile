@@ -16,6 +16,8 @@ pipeline {
 
     environment {
         ACR_REGISTRY = "oussweatherapp.azurecr.io"
+        DOCKER_USERNAME= "oussachour"
+        DOCKER_PASSWORD = credentials('docker-password')
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
         DOCKER_IMAGE_NAME = 'weather-app-backend'
         DOCKER_IMAGE_TAG = 'latest'
@@ -44,6 +46,9 @@ pipeline {
                 script {
                     sh '''
                     docker buildx build --platform linux/amd64,linux/arm64 -t "${ACR_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}" .
+                    
+                    # Tag the image for DockerHub
+                    docker tag ${ACR_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ${DOCKER_USERNAME}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} 
                     '''                
                 }
             }
@@ -69,8 +74,9 @@ pipeline {
             steps {
                 echo "Pushing the new docker image to Docker Hub ..."
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        app.push("latest")  
+                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS_ID) {
+                        sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+                        sh "docker push ${DOCKER_USERNAME}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                     }
                 }
             }
@@ -86,10 +92,9 @@ pipeline {
                         az webapp config container set \
                             --name ${WEB_APP_NAME} \
                             --resource-group ${RESOURCE_GROUP} \
-                            --docker-custom-image-name ${ACR_REGISTRY}/${DOCKER_IMAGE_NAME}:latest \
+                            --docker-custom-image-name ${ACR_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
                             --docker-registry-server-url https://${ACR_REGISTRY}
                     """
-                    
                     // Restart the Web App to pull the new image
                     sh "az webapp restart --name ${WEB_APP_NAME} --resource-group ${RESOURCE_GROUP}"
                 }
